@@ -5,6 +5,7 @@ import Input from "./components/Input";
 import TaskList from "./components/TaskList";
 
 import { useEffect, useState } from "react";
+
 function App() {
 	const [tasks, setTasks] = useState([]);
 	const [newTask, setNewTask] = useState("");
@@ -16,6 +17,18 @@ function App() {
 		return () => clearTimeout(timer);
 	}, []);
 
+	useEffect(() => {
+		const storedTasks = JSON.parse(localStorage.getItem("tasks"));
+
+		if (storedTasks && storedTasks.length > 0) setTasks(storedTasks);
+	}, []);
+
+	useEffect(() => {
+		localStorage.setItem("tasks", JSON.stringify(tasks));
+
+		console.log(tasks);
+	}, [tasks]);
+
 	const addTask = () => {
 		if (newTask.trim()) {
 			setTasks([
@@ -26,7 +39,10 @@ function App() {
 					completed: false,
 				},
 			]);
+
 			setNewTask("");
+		} else {
+			alert("Task cannot be empty");
 		}
 	};
 
@@ -39,7 +55,12 @@ function App() {
 	};
 
 	const deleteTask = (id) => {
-		setTasks(tasks.filter((task) => task.id !== id));
+		tasks.forEach((task) => {
+			if (task.id === id)
+				task.completed
+					? setTasks(tasks.filter((task) => task.id !== id))
+					: alert("Cannot delete without completing task");
+		});
 	};
 
 	return (

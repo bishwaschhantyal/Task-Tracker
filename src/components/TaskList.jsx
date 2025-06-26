@@ -1,8 +1,6 @@
-import { useId } from "react";
 import Button from "./Button";
 
 const TaskList = ({ tasks, deleteTask, onToggleComplete }) => {
-	const id = useId();
 	return (
 		<div className="space-y-2">
 			{tasks.length === 0 ? (
@@ -15,7 +13,7 @@ const TaskList = ({ tasks, deleteTask, onToggleComplete }) => {
 							className="py-3 flex items-center justify-between">
 							<div className="flex items-center">
 								<input
-									id={id}
+									id={`checkbox-${task.id}`}
 									type="checkbox"
 									checked={task.completed}
 									onChange={() => onToggleComplete(task.id)}
