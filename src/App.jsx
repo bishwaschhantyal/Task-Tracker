@@ -12,7 +12,7 @@ function App() {
 
 	useEffect(() => {
 		setWelcomeMessage("Welcome to your task tracker!");
-		const timer = setTimeout(() => setWelcomeMessage("", 30000));
+		const timer = setTimeout(() => setWelcomeMessage(""), 3000);
 		return () => clearTimeout(timer);
 	}, []);
 
@@ -46,6 +46,11 @@ function App() {
 		<div className="w-full h-screen flex flex-col">
 			<Header />
 			<main className="container mx-auto my-8 flex-grow p-4">
+				{welcomeMessage && (
+					<div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+						<p>{welcomeMessage}</p>
+					</div>
+				)}
 				<h2 className="text-xl font-bold mb-4 text-gray-800">Dashboard</h2>
 
 				<div className="flex space-x-4 mb-5">
