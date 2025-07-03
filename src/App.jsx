@@ -3,6 +3,7 @@ import Button from "./components/Button";
 import Footer from "./components/Footer";
 import Input from "./components/Input";
 import TaskList from "./components/TaskList";
+import { fetchTasks, addTasks, updateTasks, deleteTasks } from "./api/task";
 
 import { useEffect, useState } from "react";
 
@@ -10,35 +11,48 @@ function App() {
 	const [tasks, setTasks] = useState([]);
 	const [newTask, setNewTask] = useState("");
 	const [welcomeMessage, setWelcomeMessage] = useState("");
+	const [error, setError] = useState(null);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		setWelcomeMessage("Welcome to your task tracker!");
-		const timer = setTimeout(() => setWelcomeMessage(""), 3000);
-		return () => clearTimeout(timer);
+		const initializeApp = async () => {
+			try {
+				const fetchAllTasks = await fetchTasks();
+				setTasks(fetchAllTasks);
+				setWelcomeMessage("Welcome to your task tracker!");
+				const timer = setTimeout(() => setWelcomeMessage(""), 3000);
+				return () => clearTimeout(timer);
+			} catch (error) {
+				setError(error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		initializeApp();
 	}, []);
 
-	useEffect(() => {
-		const storedTasks = JSON.parse(localStorage.getItem("tasks"));
+	// useEffect(() => {
+	// 	const storedTasks = JSON.parse(localStorage.getItem("tasks"));
 
-		if (storedTasks && storedTasks.length > 0) setTasks(storedTasks);
-	}, []);
+	// 	if (storedTasks && storedTasks.length > 0) setTasks(storedTasks);
+	// }, []);
 
-	useEffect(() => {
-		localStorage.setItem("tasks", JSON.stringify(tasks));
+	// useEffect(() => {
+	// 	localStorage.setItem("tasks", JSON.stringify(tasks));
 
-		console.log(tasks);
-	}, [tasks]);
+	// 	console.log(tasks);
+	// }, [tasks]);
 
 	const addTask = () => {
 		if (newTask.trim()) {
-			setTasks([
-				...tasks,
-				{
-					id: Date.now(),
-					text: newTask,
-					completed: false,
-				},
-			]);
+			addTasks(newTask)
+				.then((task) => {
+					setTasks((prevTasks) => [...prevTasks, task]);
+				})
+				.catch((error) => {
+					setError("Failed to add task: " + error.message);
+				});
 
 			setNewTask("");
 		} else {
@@ -55,13 +69,43 @@ function App() {
 	};
 
 	const deleteTask = (id) => {
-		tasks.forEach((task) => {
-			if (task.id === id)
-				task.completed
-					? setTasks(tasks.filter((task) => task.id !== id))
-					: alert("Cannot delete without completing task");
-		});
+		const taskToDelete = tasks.find((task) => task.id === id);
+
+		if (!taskToDelete) {
+			alert("Task not found");
+			return;
+		}
+
+		if (!taskToDelete.completed) {
+			alert("Cannot delete without completing task");
+			return;
+		}
+
+		deleteTasks(id)
+			.then(() => {
+				setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+			})
+			.catch((error) => {
+				setError("Failed to delete task: " + error.message);
+			});
 	};
+
+	const updateTask = (id, updatedTask) => {
+		updateTasks(id, updatedTask)
+			.then((res) => {
+				setTasks((prevTasks) =>
+					prevTasks.map((task) =>
+						task.id === id ? { ...task, text: updatedTask } : task,
+					),
+				);
+			})
+			.catch((error) => {
+				setError("Failed to update task: " + error.message);
+			});
+	};
+
+	if (loading) return <p className="text-gray-700 p-4">Loading tasks...</p>;
+	if (error) return <p className="text-red-500 p-4">Error: {error}</p>;
 
 	return (
 		<div className="w-full h-screen flex flex-col">
@@ -93,6 +137,7 @@ function App() {
 					tasks={tasks}
 					onToggleComplete={onToggleComplete}
 					deleteTask={deleteTask}
+					updateTask={updateTask}
 				/>
 			</main>
 			<Footer />
